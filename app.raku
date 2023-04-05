@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS user (
 )
 SQL
 
-get('/', -> $request, $response {
+get('/', sub ($request, $response) {
     $response.html('<h1>Hello World!</h1>')
 });
 
@@ -30,7 +30,7 @@ sub auth-middleware($request, $response, &next) {
     &next();
 }
 
-get('/users', -> $request, $response {
+get('/users', sub ($request, $response) {
     my @user-rows = $db.execute('SELECT * FROM user').allrows(:array-of-hash);
     my $json = to-json(@user-rows);
     $response.json($json);
@@ -41,7 +41,7 @@ sub validate-user(%user) {
     %user<age> > 18;
 }
 
-post('/users', -> $request, $response {
+post('/users', sub ($request, $response) {
     my %user = $request.content;
     if validate-user(%user) {
         $db.execute('INSERT INTO user (name, age, email) VALUES (?, ?, ?)', %user<name>, %user<age>, %user<email>);
@@ -51,7 +51,7 @@ post('/users', -> $request, $response {
     }
 }, [ &auth-middleware ]);
 
-get('/users/:id', -> $request, $response {
+get('/users/:id', sub ($request, $response) {
     my $id = $request.param('id');
     my @users = $db.execute('SELECT * FROM user WHERE id = ?', $id).allrows(:array-of-hash);
 
@@ -60,7 +60,7 @@ get('/users/:id', -> $request, $response {
     $response.json(to-json(@users[0]));
 });
 
-delete('/users/:id', -> $request, $response {
+delete('/users/:id', sub ($request, $response) {
     my $id = $request.param('id');
 
     try {
